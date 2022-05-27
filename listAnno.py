@@ -36,20 +36,19 @@ class Anno:
         assert False, "anno must be define"
 
     def __getitem__(self, index):
-        return self.item[index]
+        return self.container.cur[index]
 
     def write(self):
         with open(self.output, 'w') as f:
             for item in self.container:
-                if item.isHead and self.hasHeader:
+                if self.container.isHead and self.hasHeader:
                     f.write('\t'.join(item.value) + '\t' + self.newCols + '\n')
                 else:
                     f.write('\t'.join(item.value) + '\t' + '\t'.join(item.attr) + '\n')
     
     def run(self):
         for item in self.container:
-            self.item = item
-            if item.isHead and self.hasHeader:
+            if self.container.isHead and self.hasHeader:
                 continue
             item.putInfo(self.anno())
         self.write()
