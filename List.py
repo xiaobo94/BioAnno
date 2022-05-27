@@ -4,13 +4,6 @@ class Node:
         self.attr = []
         self.prev = None
         self.next = None
-#    @property
-#    def next(self):
-#        return self.n
-    
-#    @property
-#    def prev(self):
-#        return self.p
     
     @property
     def end(self):
@@ -19,7 +12,25 @@ class Node:
     def putInfo(self, val):
         self.attr.append(val)
 
-class List(Node):
+    @property
+    def isHead(self):
+        return self.prev == None
+
+    def __getitem__(self, index):
+        return self.value[index]
+
+class Iter:
+    def __init__(self, headNode):
+        self.curNode = headNode
+    def __next__(self):
+        if not self.curNode:
+            raise StopIteration
+        else:
+            _ = self.curNode
+            self.curNode = self.curNode.next
+            return _
+
+class List:
 
     def __init__(self):
         self.__head = None
@@ -36,6 +47,9 @@ class List(Node):
     def __len__(self):
         return self.__items
 
+    def __iter__(self):
+        return Iter(self.head)
+
     def add(self, value):
         node = Node(value)
         if self.isEmpty():
@@ -48,8 +62,8 @@ class List(Node):
             self.__head = node
             self.__items += 1
 
-    def isHead(self):
-        return self.__cur == self.__head
+    #def isHead(self):
+    #    return self.__cur == self.__head
     
     def append(self, value):
         node = Node(value)
@@ -63,9 +77,6 @@ class List(Node):
             self.__end = node
             self.__items += 1
 
-    def setCur(self, cur):
-        self.__cur = cur
-        
     @property
     def head(self):
         self.__cur = self.__head
@@ -78,6 +89,7 @@ class List(Node):
     @property
     def headItem(self):
         return self.head.value
+    
     @property
     def nextItem(self):
         if self.end():
@@ -85,26 +97,6 @@ class List(Node):
         self.__cur = self.__cur.next
         return self.__cur.value
 
-    '''
-    def insert(self, pos, value):
-        if pos <= 0:
-            self.add(value)
-        elif pos >= len(self):
-            self.append(value)
-        else:
-            node = Node(value)
-            count = 0
-            cur = self.begin
-            while count < pos - 1:
-                count += 1
-                cur = cur.next
-            node.next = cur.next
-            cur.next.prev = node
-            node.prev = cur
-            cur.next = node
-    '''
-
-    
 if __name__ == "__main__":
     l = List()
     l.append('xiao')
