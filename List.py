@@ -28,8 +28,6 @@ class List:
     def isEmpty(self):
         return self.__items == 0
 
-    def end(self):
-        return self.__cur.end
 
     def __len__(self):
         return self.__items
@@ -56,6 +54,10 @@ class List:
     @property
     def isHead(self):
         return self.__cur == self.__head.next
+
+    @property
+    def isEnd(self):
+        return self.__cur == self.__end
     
     def append(self, value):
         node = Node(value)
@@ -68,3 +70,7 @@ class List:
     @property
     def cur(self):
         return self.__cur
+
+    @property
+    def isEnd(self):
+        return self.__cur == self.__end 

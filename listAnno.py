@@ -1,8 +1,11 @@
 from List import List
+from sys import stdout, stdin
 
 class Database:
-    def __init__(self, database, hasHeader = False, dellimiter = '\t'):
+    def __init__(self, database, hasHeader = False, delimiter = '\t'):
         self.database = database
+        self.hasHeader = hasHeader
+        self.delimiter = delimiter
         self.dbCont = List()
         self.proFile()
 
@@ -11,56 +14,116 @@ class Database:
             self.dbCont.append(line.rstrip().split(self.delimiter))
 
     def __iter__(self):
-        return Iter(self.dbCont)
+        return iter(self.dbCont)
+
+    def __next__(self):
+        yield next(self.dbCont)
+
+    def __getitem__(self, index):
+        print(self.dbCont.cur)
+        if self.dbCont.isHead and self.hasHeader:
+            next(self)
+        return self.dbCont.cur[index]
         
 class Anno:
-    def __init__(self, annofile, output, *index, newCols = None, database = None, hasHeader = False, delimiter = '\t'):
+    def __init__(self, *index, reader = stdin, writer = stdout, newCols = None, database = None, hasHeader = False, delimiter = '\t'):
         self.hasHeader = hasHeader
-        self.annofile =annofile
+        self.reader = reader
+        self.writer = writer
         self.newCols = newCols
-        self.container = List()
+        self.needAnno = List()
         self.db = database
         self.delimiter = delimiter
         self.index = index
-        self.output = output
         self.proFile()
         
     def proFile(self):
-        for line in open(self.annofile):
-            self.container.append(line.rstrip().split(self.delimiter))
+        for line in self.reader:
+            self.needAnno.append(line.rstrip().split(self.delimiter))
 
     def __repr__(self):
-        return f"Total items: {len(self.container)}\nIndex: {self.index}"
+        return f"Total items: {len(self.needAnno)}\nIndex: {self.index}"
 
     def anno(self):
         assert False, "anno must be define"
 
     def __getitem__(self, index):
-        return self.container.cur[index]
+        return self.needAnno.cur[index]
 
     def write(self):
-        with open(self.output, 'w') as f:
-            for item in self.container:
-                if self.container.isHead and self.hasHeader:
-                    f.write('\t'.join(item.value) + '\t' + self.newCols + '\n')
-                else:
-                    f.write('\t'.join(item.value) + '\t' + '\t'.join(item.attr) + '\n')
+        for item in self.needAnno:
+            if self.needAnno.isHead and self.hasHeader:
+                self.writer.write('\t'.join(item.value) + '\t' + self.newCols + '\n')
+            else:
+                self.writer.write('\t'.join(item.value) + '\t' + '\t'.join(item.attr) + '\n')
+
+    def addAnno(self, val):
+        self.needAnno.cur.putInfo(val)
     
     def run(self):
-        for item in self.container:
-            if self.container.isHead and self.hasHeader:
-                continue
-            item.putInfo(self.anno())
+        self.anno()
         self.write()
     
 
 if __name__ == "__main__":
+    
     class MyAnno(Anno):
         def anno(self):
-            if float(self[11]) > 0.1:
-                return 'yes'
-            else:
-                return 'no'
-            
-    a = MyAnno('needAnno.txt', "myAnno.txt", hasHeader = True, newCols = 'GnomAD_Freq')
+            t = ('chr1', 'chr2', 'chr3', 'chr4', 'chr5', 'chr6', 'chr7', 'chr8', 'chr9', 'chr10', 'chr11', 'chr12', 'chr13', 'chr14', 'chr15', 'chr16', 'chr17', 'chr18', 'chr19', 'chr20', 'chr21', 'chr22', 'chrX', 'chrY', 'chrMT')
+            needAnno = iter(self.needAnno)
+            database = iter(self.db)
+            next(needAnno)
+            naItem = next(needAnno)
+            next(database)
+            dbItem = next(database)
+            while True:
+                try:
+                    chrom = naItem[0]
+                    pos = int(naItem[1]) + 1
+                    ref = naItem[3]
+                    alt = naItem[4]
+
+                    db_chrom = dbItem[0]
+                    db_pos = int(dbItem[1])
+                    db_ref = dbItem[3]
+                    db_alt = dbItem[4]
+
+                    if t.index(db_chrom) > t.index(chrom):
+                        self.addAnno("*")
+                        naItem = next(needAnno)
+                    elif t.index(db_chrom) < t.index(chrom):
+                        dbItem = next(database)
+                    else:
+                        if db_pos > pos:
+                            self.addAnno("*")
+                            naItem = next(needAnno)
+                        elif db_pos < pos:
+                            dbItem = next(database)
+                        else:
+                            if ref == db_ref and alt == db_alt:
+                                self.addAnno(dbItem[5])
+                                naItem = next(needAnno)
+                            else:
+                                self.addAnno("*")
+                                naItem = next(needAnno)
+                except StopIteration:
+                    while not self.needAnno.isEnd:
+                        self.addAnno("*")
+                        next(needAnno)
+                    break
+                    
+    db = Database('database.txt', hasHeader = True)
+
+    class MyAnno(Anno):
+        def anno(self):
+            for item in self.needAnno:
+                if len(item[3]) == len(item[4]):
+                    self.addAnno('SNP')
+                else:
+                    self.addAnno('not_a_SNP')
+    
+    reader = open('needAnno.txt')
+    writer = open('myAnno.txt', 'w')
+    a = MyAnno(reader = reader, writer = writer, hasHeader = True, newCols = 'GnomAD_Freq')
+    #a = MyAnno(writer = writer, database = db, dbHasHeader = True, hasHeader = True, newCols = "CLNREVSTAT")
     a.run()
