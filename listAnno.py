@@ -107,13 +107,17 @@ if __name__ == "__main__":
                                 self.addAnno("*")
                                 naItem = next(needAnno)
                 except StopIteration:
-                    while not self.needAnno.isEnd:
-                        self.addAnno("*")
-                        next(needAnno)
+                    try:
+                        while not self.needAnno.isEnd:
+                            self.addAnno("*")
+                            next(needAnno)
+                    except StopIteration:
+                        pass
                     break
                     
     db = Database('database.txt', hasHeader = True)
 
+    '''
     class MyAnno(Anno):
         def anno(self):
             for item in self.needAnno:
@@ -125,5 +129,6 @@ if __name__ == "__main__":
     reader = open('needAnno.txt')
     writer = open('myAnno.txt', 'w')
     a = MyAnno(reader = reader, writer = writer, hasHeader = True, newCols = 'GnomAD_Freq')
-    #a = MyAnno(writer = writer, database = db, dbHasHeader = True, hasHeader = True, newCols = "CLNREVSTAT")
+    '''
+    a = MyAnno(database = db, hasHeader = True, newCols = "CLNREVSTAT")
     a.run()
